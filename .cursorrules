@@ -1,0 +1,231 @@
+# Routine Habit Tracker - Cursor Rules
+
+이 문서는 Routine Habit Tracker 프로젝트의 개발 가이드라인을 정의합니다.
+
+---
+
+## 1. 아키텍처 패턴
+
+### 1.1 컴포넌트 아키텍처
+- **함수형 컴포넌트만 사용**: 클래스 컴포넌트는 절대 사용하지 않음
+- **React Hooks 패턴**: useState, useEffect, useCallback, useMemo 등 적절히 활용
+- **컴포넌트 분리 원칙**: 
+  - 단일 책임 원칙 준수
+  - 하나의 컴포넌트는 하나의 기능만 담당
+  - 200줄 이상의 컴포넌트는 분리 고려
+- **Props 인터페이스 정의**: 모든 컴포넌트는 명시적인 Props 인터페이스를 가져야 함
+
+### 1.2 상태 관리
+- **로컬 상태**: useState 사용 (컴포넌트 내부 상태)
+- **전역 상태**: 현재는 localStorage 기반, 필요시 Context API 사용
+- **데이터 영속성**: localStorage를 통한 클라이언트 사이드 저장
+- **상태 업데이트**: 불변성 원칙 준수 (spread operator, map, filter 등 사용)
+
+### 1.3 파일 구조 패턴
+```
+src/
+├── app/                    # 애플리케이션 메인 로직
+│   ├── App.tsx            # 루트 컴포넌트
+│   └── components/        # 기능별 컴포넌트
+│       ├── ui/            # 재사용 가능한 UI 컴포넌트 (shadcn/ui 스타일)
+│       └── [Feature].tsx  # 기능별 컴포넌트
+├── types/                  # TypeScript 타입 정의
+├── utils/                  # 유틸리티 함수
+└── styles/                 # 스타일 파일
+```
+
+### 1.4 데이터 흐름
+- **단방향 데이터 흐름**: Props down, Events up
+- **이벤트 핸들러**: on[Action] 네이밍 (예: onCheck, onEdit, onDelete)
+- **데이터 변환**: utils 폴더의 순수 함수 사용
+
+---
+
+## 2. 네이밍 컨벤션
+
+### 2.1 파일 및 디렉토리
+- **컴포넌트 파일**: PascalCase (예: `HabitCard.tsx`, `AddHabitModal.tsx`)
+- **유틸리티 파일**: camelCase (예: `habitUtils.ts`)
+- **타입 파일**: camelCase (예: `habit.ts`)
+- **디렉토리**: kebab-case 또는 camelCase (예: `components/`, `habit-card/`)
+
+### 2.2 변수 및 함수
+- **변수**: camelCase (예: `habitId`, `todayLog`, `showModal`)
+- **함수**: camelCase, 동사로 시작 (예: `getStreakCount`, `handleCheckHabit`)
+- **상수**: UPPER_SNAKE_CASE (예: `STORAGE_KEYS`, `HABIT_ICONS`)
+- **컴포넌트**: PascalCase (예: `HabitCard`, `AddHabitModal`)
+
+### 2.3 TypeScript 타입
+- **인터페이스**: PascalCase, 명사형 (예: `Habit`, `HabitLog`, `RecoveryMode`)
+- **타입 별칭**: PascalCase (예: `HabitCardProps`)
+- **제네릭**: 단일 대문자 (예: `T`, `K`, `V`)
+- **Props 인터페이스**: `[ComponentName]Props` 형식 (예: `HabitCardProps`)
+
+### 2.4 CSS 클래스
+- **Tailwind CSS 우선**: 인라인 유틸리티 클래스 사용
+- **커스텀 클래스**: kebab-case (필요시만 사용)
+- **조건부 클래스**: `cn()` 유틸리티 함수 사용 (tailwind-merge)
+
+### 2.5 Import 순서
+1. React 및 React 관련 라이브러리
+2. 외부 라이브러리 (lucide-react, date-fns 등)
+3. 내부 타입 (@/types)
+4. 내부 컴포넌트 (@/app/components)
+5. 내부 유틸리티 (@/utils)
+6. 스타일 파일 (상대 경로)
+
+---
+
+## 3. 보안 원칙
+
+### 3.1 데이터 보안
+- **localStorage 사용**: 민감한 정보는 저장하지 않음
+- **입력 검증**: 사용자 입력은 항상 검증 및 sanitize
+- **XSS 방지**: dangerouslySetInnerHTML 사용 금지
+- **데이터 직렬화**: JSON.parse/stringify 사용 시 try-catch 처리
+
+### 3.2 의존성 보안
+- **정기적 업데이트**: `npm audit` 실행하여 취약점 확인
+- **의존성 검증**: 신뢰할 수 있는 패키지만 사용
+- **버전 고정**: package.json에 정확한 버전 명시
+
+### 3.3 코드 보안
+- **하드코딩 금지**: API 키, 비밀번호 등은 절대 코드에 포함하지 않음
+- **환경 변수**: 민감한 정보는 환경 변수 사용 (현재 프로젝트는 불필요)
+- **에러 처리**: 사용자에게 노출되는 에러 메시지는 민감 정보 제외
+
+### 3.4 localStorage 보안
+- **데이터 검증**: localStorage에서 읽은 데이터는 항상 검증
+- **에러 핸들링**: JSON.parse 실패 시 기본값 사용
+- **용량 제한**: localStorage 용량 제한 고려 (약 5-10MB)
+
+---
+
+## 4. 절대 금지 사항
+
+### 4.1 코드 스타일
+- ❌ **클래스 컴포넌트 사용 금지**: 함수형 컴포넌트만 사용
+- ❌ **any 타입 사용 금지**: TypeScript의 타입 안정성 유지
+- ❌ **console.log 프로덕션 코드**: 개발 중에도 제거 또는 주석 처리
+- ❌ **인라인 스타일 객체**: Tailwind CSS 우선 사용
+- ❌ **전역 변수 사용**: useState, Context API 등 사용
+
+### 4.2 React 패턴
+- ❌ **직접 DOM 조작**: React의 선언적 방식 사용
+- ❌ **index를 key로 사용**: 고유한 id 사용 (crypto.randomUUID 등)
+- ❌ **useEffect 무한 루프**: 의존성 배열 정확히 지정
+- ❌ **조건부 훅 사용**: Hooks는 항상 최상위 레벨에서 호출
+
+### 4.3 성능
+- ❌ **불필요한 리렌더링**: useMemo, useCallback 적절히 사용
+- ❌ **큰 번들 크기**: 불필요한 라이브러리 import 금지
+- ❌ **동기적 무거운 연산**: 메인 스레드 블로킹 방지
+
+### 4.4 데이터 관리
+- ❌ **직접 상태 변이**: immer 또는 불변성 패턴 사용
+- ❌ **localStorage 동기 접근**: 비동기 처리 고려
+- ❌ **타입 없는 데이터**: 모든 데이터는 타입 정의 필요
+
+### 4.5 UI/UX
+- ❌ **접근성 무시**: aria-label, role 등 적절히 사용
+- ❌ **반응형 무시**: 모바일, 태블릿, 데스크톱 모두 고려
+- ❌ **한국어 하드코딩**: 다국어 지원 고려 (현재는 한국어만)
+
+---
+
+## 5. 디렉토리 구조
+
+### 5.1 루트 디렉토리
+```
+Routine Habit Tracker/
+├── .cursorrules          # 이 파일
+├── package.json          # 의존성 관리
+├── vite.config.ts        # Vite 설정
+├── postcss.config.mjs    # PostCSS 설정
+├── index.html           # HTML 진입점
+├── README.md            # 프로젝트 문서
+├── src/                 # 소스 코드
+└── node_modules/        # 의존성 (gitignore)
+```
+
+### 5.2 src 디렉토리 구조
+```
+src/
+├── main.tsx                    # 애플리케이션 진입점
+├── app/
+│   ├── App.tsx                # 루트 컴포넌트
+│   └── components/
+│       ├── HabitCard.tsx      # 습관 카드 컴포넌트
+│       ├── AddHabitModal.tsx  # 습관 추가 모달
+│       ├── StatsView.tsx       # 통계 뷰
+│       ├── RecoveryModeModal.tsx # 회복 모드 모달
+│       ├── figma/              # Figma 관련 컴포넌트
+│       │   └── ImageWithFallback.tsx
+│       └── ui/                 # 재사용 가능한 UI 컴포넌트
+│           ├── button.tsx
+│           ├── card.tsx
+│           ├── dialog.tsx
+│           ├── input.tsx
+│           └── ... (shadcn/ui 스타일)
+├── types/
+│   └── habit.ts                # Habit 관련 타입 정의
+├── utils/
+│   └── habitUtils.ts           # Habit 관련 유틸리티 함수
+└── styles/
+    ├── index.css               # 메인 CSS (imports)
+    ├── tailwind.css            # Tailwind CSS 설정
+    ├── theme.css               # 테마 변수
+    └── fonts.css               # 폰트 설정
+```
+
+### 5.3 컴포넌트 구조 규칙
+- **기능별 컴포넌트**: `src/app/components/`에 배치
+- **재사용 UI 컴포넌트**: `src/app/components/ui/`에 배치
+- **타입 정의**: `src/types/`에 배치
+- **유틸리티 함수**: `src/utils/`에 배치
+- **스타일**: `src/styles/`에 배치
+
+### 5.4 파일 생성 규칙
+- **새 컴포넌트**: 기능별로 적절한 위치에 생성
+- **공통 컴포넌트**: `ui/` 폴더에 배치
+- **타입 추가**: 관련 타입 파일에 추가 또는 새 파일 생성
+- **유틸리티 함수**: 관련 유틸리티 파일에 추가 또는 새 파일 생성
+
+### 5.5 Import 경로 규칙
+- **절대 경로 사용**: `@/` 별칭 사용 (vite.config.ts에 정의됨)
+- **예시**:
+  ```typescript
+  import { Habit } from '@/types/habit';
+  import { HabitCard } from '@/app/components/HabitCard';
+  import { getToday } from '@/utils/habitUtils';
+  ```
+- **상대 경로**: 같은 디렉토리 내에서만 사용 (최대 1단계)
+
+---
+
+## 추가 가이드라인
+
+### 스타일링
+- **Tailwind CSS 우선**: 가능한 한 Tailwind 유틸리티 클래스 사용
+- **커스텀 스타일**: `theme.css`의 CSS 변수 활용
+- **반응형**: mobile-first 접근 방식
+
+### 타입 안정성
+- **엄격한 타입 체크**: TypeScript strict 모드 준수
+- **타입 추론 활용**: 명시적 타입이 필요한 경우만 작성
+- **타입 가드**: 런타임 타입 검증 필요시 사용
+
+### 성능 최적화
+- **코드 스플리팅**: 필요시 React.lazy 사용
+- **메모이제이션**: useMemo, useCallback 적절히 활용
+- **이미지 최적화**: 필요시 lazy loading
+
+### 테스트 (향후)
+- **단위 테스트**: 유틸리티 함수 중심
+- **컴포넌트 테스트**: 주요 컴포넌트 중심
+- **통합 테스트**: 사용자 플로우 중심
+
+---
+
+**마지막 업데이트**: 2024년
+**프로젝트 버전**: 0.0.1
